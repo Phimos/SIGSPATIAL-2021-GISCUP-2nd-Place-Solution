@@ -17,7 +17,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_se
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-data_dir = "/data3/ganyunchong/giscup_2021"
+data_dir = "/path/to/your/download/dataset/"
 
 train_dir = os.path.join(data_dir, "train")
 parsed_dir = os.path.join(data_dir, "parsed")
@@ -25,7 +25,6 @@ test_file = os.path.join(data_dir, "20200901_test.txt")
 final_files = [os.path.join(data_dir, "20200901_test.txt")]
 weather_file = os.path.join(data_dir, "weather.csv")
 json_dir = os.path.join(data_dir, "json")
-tokenizer_dir = os.path.join("/nvme/ganyunchong", "didi", "tokenizer")
 
 
 def parse_head(head: str):
