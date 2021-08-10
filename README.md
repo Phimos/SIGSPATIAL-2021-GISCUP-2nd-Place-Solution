@@ -37,3 +37,5 @@ The final leaderboard result is the average of 5fold and 10fold (15 model in tot
 ```
 python merge_submission.py
 ```
+
+10Fold weight can be downloaded from [Google Drive](https://drive.google.com/drive/folders/12lk7hnlKcut6IAdtRdhGQunLamml84gz?usp=sharing).
