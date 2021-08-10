@@ -33,7 +33,8 @@ train_end: str = "20200824"
 validation_end: str = "20200831"
 
 ckpt_path = "/nvme/ganyunchong/didi/lightning_logs/version_194/checkpoints/epoch=19-val_mape=0.11666.ckpt"
-tokenizer_dir = "/nvme/ganyunchong/didi/kfold"
+tokenizer_dir = "/nvme/ganyunchong/didi/10fold"
+kfold_data_dir = "/nvme/ganyunchong/didi/10fold"
 
 
 def test():
@@ -48,6 +49,7 @@ def test():
         validation_end=validation_end,
         fold=FOLD,
         tokenizer_dir=tokenizer_dir,
+        kfold_data_dir=kfold_data_dir,
     )
     val_dataset = GISCUPDataset(
         dataset_type="val",
@@ -55,9 +57,13 @@ def test():
         validation_end=validation_end,
         fold=FOLD,
         tokenizer_dir=tokenizer_dir,
+        kfold_data_dir=kfold_data_dir,
     )
     test_dataset = GISCUPDataset(
-        dataset_type="test", fold=FOLD, tokenizer_dir=tokenizer_dir
+        dataset_type="test",
+        fold=FOLD,
+        tokenizer_dir=tokenizer_dir,
+        kfold_data_dir=kfold_data_dir,
     )
 
     train_dataset.load_tokenizer()
