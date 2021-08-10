@@ -174,5 +174,4 @@ class GISCUPModel(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        # scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2)
         return optimizer

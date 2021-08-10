@@ -431,22 +431,6 @@ class GISCUPDataset(Dataset):
                 load_pickle(os.path.join(tokenizer_dir, tokenizer)),
             )
 
-    def reindex(self):
-        for order in tqdm(self.train_data):
-            order["head"]["driver_id"] = self.convert_driver_to_idx(
-                order["head"]["driver_id"]
-            )
-            for link in order["link"]:
-                link["link_id"] = self.convert_link_to_idx(link["link_id"])
-
-    def convert_link_to_idx(self, link_id: int):
-        assert self.link_tokenizer is not None
-        return self.link_tokenizer.encode(link_id)
-
-    def convert_driver_to_idx(self, driver_id: int):
-        assert self.driver_tokenizer is not None
-        return self.driver_tokenizer.encode(driver_id)
-
     @property
     def driver_num(self) -> int:
         assert self.driver_tokenizer is not None
