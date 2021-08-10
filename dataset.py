@@ -185,6 +185,7 @@ class GISCUPDataset(Dataset):
         self.loaded_data: Dict[str, Any] = {}
 
         self.tokenizer_dir = tokenizer_dir
+        self.kfold_data_dir = kfold_data_dir
         self.link_tokenizer = None
         self.driver_tokenizer = None
 
@@ -341,9 +342,7 @@ class GISCUPDataset(Dataset):
             print("val_idx:", val_idx[:10])
             train_files = [train_data[idx]["head"]["json_path"] for idx in train_idx]
             val_files = [train_data[idx]["head"]["json_path"] for idx in val_idx]
-            fold_dir = os.path.join(
-                "/nvme/ganyunchong/didi", "10fold", "fold%d" % (i + 1)
-            )
+            fold_dir = os.path.join(self.kfold_data_dir, "fold%d" % (i + 1))
             dump_pickle(train_files, os.path.join(fold_dir, "train_files.pickle"))
             dump_pickle(val_files, os.path.join(fold_dir, "val_files.pickle"))
             self.train_data = [train_data[idx] for idx in train_idx]
@@ -687,23 +686,15 @@ def collate_fn(batch):
 
 
 if __name__ == "__main__":
-    # dataset = GISCUPDataset("test", load=True, flush=True)
-    # dataset.preprocess_to_json()
-    dataset = GISCUPDataset("test", load=True)
+    dataset = GISCUPDataset("train_val_test", load=True, flush=True)
     dataset.preprocess_to_json()
-    exit(0)
-    pprint(dataset.train_data[:10])
-    # df = pd.DataFrame(pd.json_normalize(dataset.train_data[:10]))
-    # print(df.columns)
 
-    print("*" * 20)
-    exit(0)
+    dataset = GISCUPDataset(
+        "train_val", load=True, kfold_data_dir="/nvme/ganyunchong/didi/5fold"
+    )
+    dataset.split_k_fold(splits=5, shuffle=True)
 
-    dataset.generate_tokenizer("tokenizer")
-    print(dataset[0])
-    print("*" * 20)
-    exit(0)
-
-    dataset = GISCUPDataset("train_val", load=True)
-    # extract feature in preprocess_to_json method
-    dataset.preprocess_to_json()
+    dataset = GISCUPDataset(
+        "train_val", load=True, kfold_data_dir="/nvme/ganyunchong/didi/10fold"
+    )
+    dataset.split_k_fold(splits=10, shuffle=True)
