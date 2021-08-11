@@ -1,6 +1,6 @@
 # SIGSPATIAL-2021-GISCUP-3rd-Solution
 
-**Competition Page**: https://www.biendata.xyz/competition/didi-eta/
+**Competition Page**: [DiDi-ETA](https://www.biendata.xyz/competition/didi-eta/)
 
 ## Quick Start
 
