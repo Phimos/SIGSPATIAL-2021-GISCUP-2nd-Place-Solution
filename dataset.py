@@ -625,7 +625,7 @@ class GISCUPDataset(Dataset):
         rnn_config = {
             "dense": {"size": 7},
             "sparse": [
-                {"col": 0, "name": "link_status", "size": 5, "dim": 20},
+                # {"col": 0, "name": "link_status", "size": 5, "dim": 20},
                 {"col": 1, "name": "slice_id", "size": 288, "dim": 20},
                 {"col": 2, "name": "weekday", "size": 7, "dim": 20},
             ],
