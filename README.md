@@ -113,3 +113,5 @@ RNN -/
 ## Available Model Weight
 
 10Fold weight can be downloaded from [Google Drive](https://drive.google.com/drive/folders/12lk7hnlKcut6IAdtRdhGQunLamml84gz?usp=sharing).
+
+All submission files can be downloaded from [Google Drive](https://drive.google.com/drive/folders/146WYjFXE6YdXk2ED6YypAxlEM1-lOmbO?usp=sharing)
