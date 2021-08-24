@@ -1,6 +1,10 @@
 # SIGSPATIAL-2021-GISCUP-3rd-Solution
 
-**Competition Page**: [DiDi-ETA](https://www.biendata.xyz/competition/didi-eta/)
+**Competition Page:** [DiDi-ETA](https://www.biendata.xyz/competition/didi-eta/)
+
+**Team Name:** Pims
+
+**Team Members:** Yunchong Gan, Mingjie Wang, Haoyu Zhang
 
 ## Quick Start
 
