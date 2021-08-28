@@ -91,14 +91,14 @@ RNN -/
 
 **RNN - Link**
 
-| Name                | Type        | Number of Embedding | Embedding Dim | Description |
-| ------------------- | ----------- | ------------------- | ------------- | ----------- |
-| Link Time           | Numeric     |                     | 1             |             |
-| Link Ratio          | Numeric     |                     | 1             |             |
-| Link Status(Onehot) | Numeric     |                     | 5             |             |
-| Weekday             | Categorical | 7                   | 20            |             |
-| Slice ID            | Categorical | 288                 | 20            |             |
-| Link ID             | Categorical | depend on dataset   | 20            |             |
+| Name                | Type        | Number of Embedding | Embedding Dim | Description                               |
+| ------------------- | ----------- | ------------------- | ------------- | ----------------------------------------- |
+| Link Time           | Numeric     |                     | 1             |                                           |
+| Link Ratio          | Numeric     |                     | 1             |                                           |
+| Link Status(Onehot) | Numeric     |                     | 5             |                                           |
+| Weekday             | Categorical | 7                   | 20            |                                           |
+| Slice ID            | Categorical | 288                 | 20            | compute with slice id and link/cross time |
+| Link ID             | Categorical | depend on dataset   | 20            |                                           |
 
 **RNN - Cross**
 | Name          | Type        | Number of Embedding | Embedding Dim | Description |
