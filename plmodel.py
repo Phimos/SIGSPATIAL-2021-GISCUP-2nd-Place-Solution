@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from dataset import GISCUPDataset, collate_fn
-from model import MAPE, RMSPE, WDR
+from model import MAPE, RMSPE, WDRR
 
 
 class GISCUPModel(pl.LightningModule):
@@ -36,7 +36,8 @@ class GISCUPModel(pl.LightningModule):
         super(GISCUPModel, self).__init__()
         self.lr = lr
         self.weight_decay = weight_decay
-        self.model = WDR(
+        self.aux_loss = True
+        self.model = WDRR(
             driver_num=driver_num,
             link_num=link_num,
             wide_config=wide_config,
@@ -85,11 +86,16 @@ class GISCUPModel(pl.LightningModule):
         ).data.squeeze()
         arrival_pred = arrival_pred[packed_label > 0]
         packed_label = packed_label[packed_label > 0] - 1
-        anx_loss = F.cross_entropy(arrival_pred, packed_label)
+        aux_loss = F.cross_entropy(arrival_pred, packed_label)
         mape_loss = self.loss(pred, label, weight)
-        self.log("train_anx_loss", anx_loss)
+
+        if self.aux_loss:
+            loss = mape_loss + 0.1 * aux_loss
+        else:
+            loss = mape_loss
+
+        self.log("train_aux_loss", aux_loss)
         self.log("train_mape_loss", mape_loss)
-        loss = mape_loss + 0.1 * anx_loss
         self.log("train_loss", loss)
 
         if self.global_step % 4096 == 0:

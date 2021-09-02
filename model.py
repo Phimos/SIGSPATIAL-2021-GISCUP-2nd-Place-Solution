@@ -228,7 +228,7 @@ class Recurrent(nn.Module):
         return torch.cat([ht_link[-1], ht_cross[-1]], dim=-1), arrival_pred
 
 
-class WDR(nn.Module):
+class WDRR(nn.Module):
     def __init__(
         self,
         driver_num,
@@ -239,7 +239,7 @@ class WDR(nn.Module):
         rnn_config=None,
         dropout=0.1,
     ):
-        super(WDR, self).__init__()
+        super(WDRR, self).__init__()
         self.wide = Wide(wide_config)
         self.deep = Deep(deep_config, dropout=dropout)
         self.recurrent = Recurrent(

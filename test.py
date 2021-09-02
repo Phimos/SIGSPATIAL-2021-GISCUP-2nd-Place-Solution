@@ -16,7 +16,6 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from dataset import GISCUPDataset, Tokenizer, collate_fn
-from model import MAPE, WDR
 from plmodel import GISCUPModel
 
 data_dir = "/data3/ganyunchong/giscup_2021"
