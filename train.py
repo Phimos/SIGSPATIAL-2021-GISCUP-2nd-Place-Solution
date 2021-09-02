@@ -1,8 +1,8 @@
+import argparse
 import os
 from pprint import pprint
 from typing import Any, Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
@@ -21,47 +21,65 @@ data_dir = "/data3/ganyunchong/giscup_2021"
 train_dir = os.path.join(data_dir, "train")
 test_file = os.path.join(data_dir, "20200901_test.txt")
 
-GPUS = 1
-EPOCHS = 25
-WORKERS = 32
-BATCH_SIZE = 512
-LEARNING_RATE = 1e-4
-WEIGHT_DECAY = 0.0
-FOLD = 5
 
-train_end: str = "20200824"
-validation_end: str = "20200831"
-
-load_ckpt: str = ""
 tokenizer_dir = "/nvme/ganyunchong/didi/10fold"
 kfold_data_dir = "/nvme/ganyunchong/didi/10fold"
 
 
-def train():
-    pl.seed_everything(42)
+def parse_args():
+    parser = argparse.ArgumentParser("Train")
+
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--gpus", type=int, default=1)
+    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--epochs", type=int, default=25)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--num_workers", type=int, default=32)
+    parser.add_argument("--weight_decay", type=float, default=0.0)
+    parser.add_argument("--fold", type=int, default=0)
+    parser.add_argument("--save_top_k", type=int, default=1)
+
+    parser.add_argument("--ckpt_path", type=str, default="")
+
+    parser.add_argument("--train_end", type=str, default="20200824")
+    parser.add_argument("--val_end", type=str, default="20200831")
+
+    parser.add_argument("--cross", dest="cross", action="store_true")
+    parser.add_argument("--no-cross", dest="cross", action="store_false")
+    parser.set_defaults(cross=True)
+
+    parser.add_argument("--aux-loss", dest="aux_loss", action="store_true")
+    parser.add_argument("--no-aux-loss", dest="aux_loss", action="store_false")
+    parser.set_defaults(aux_loss=True)
+
+    return parser.parse_args()
+
+
+def train(args):
+    pl.seed_everything(args.seed)
 
     cpu_num = os.cpu_count()
     assert isinstance(cpu_num, int)
 
     train_dataset = GISCUPDataset(
         dataset_type="train",
-        train_end=train_end,
-        validation_end=validation_end,
-        fold=FOLD,
+        train_end=args.train_end,
+        validation_end=args.val_end,
+        fold=args.fold,
         tokenizer_dir=tokenizer_dir,
         kfold_data_dir=kfold_data_dir,
     )
     val_dataset = GISCUPDataset(
         dataset_type="val",
-        train_end=train_end,
-        validation_end=validation_end,
-        fold=FOLD,
+        train_end=args.train_end,
+        validation_end=args.val_end,
+        fold=args.fold,
         tokenizer_dir=tokenizer_dir,
         kfold_data_dir=kfold_data_dir,
     )
     test_dataset = GISCUPDataset(
         dataset_type="test",
-        fold=FOLD,
+        fold=args.fold,
         tokenizer_dir=tokenizer_dir,
         kfold_data_dir=kfold_data_dir,
     )
@@ -71,23 +89,23 @@ def train():
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=True,
-        num_workers=WORKERS,
+        num_workers=args.num_workers,
         collate_fn=collate_fn,
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=False,
-        num_workers=WORKERS,
+        num_workers=args.num_workers,
         collate_fn=collate_fn,
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=False,
-        num_workers=WORKERS,
+        num_workers=args.num_workers,
         collate_fn=collate_fn,
     )
 
@@ -104,8 +122,8 @@ def train():
     pprint(deep_config)
     pprint(rnn_config)
 
-    if FOLD != 0:
-        submission_file = "submission_fold%d.csv" % FOLD
+    if args.fold != 0:
+        submission_file = "submission_fold%d.csv" % args.fold
     else:
         submission_file = "submission.csv"
 
@@ -115,8 +133,8 @@ def train():
         wide_config=wide_config,
         deep_config=deep_config,
         rnn_config=rnn_config,
-        lr=LEARNING_RATE,
-        weight_decay=WEIGHT_DECAY,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
         submission_file=submission_file,
     )
 
@@ -124,19 +142,19 @@ def train():
         monitor="val_mape",
         mode="min",
         filename="{epoch:02d}-{val_mape:.5f}",
-        save_top_k=5,
+        save_top_k=args.save_top_k,
         verbose=True,
     )
 
     trainer = pl.Trainer(
-        gpus=GPUS,
-        max_epochs=EPOCHS,
+        gpus=args.gpus,
+        max_epochs=args.epochs,
         benchmark=True,
         deterministic=True,
         stochastic_weight_avg=True,
-        distributed_backend="ddp" if GPUS > 1 else None,
+        distributed_backend="dp" if args.gpus > 1 else None,
         callbacks=[checkpoint_callback],
-        resume_from_checkpoint=load_ckpt if load_ckpt != "" else None,
+        resume_from_checkpoint=args.ckpt_path if args.ckpt_path != "" else None,
     )
 
     trainer.fit(model, train_loader, val_loader)
@@ -148,8 +166,8 @@ def train():
         wide_config=wide_config,
         deep_config=deep_config,
         rnn_config=rnn_config,
-        lr=LEARNING_RATE,
-        weight_decay=WEIGHT_DECAY,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
         submission_file=submission_file,
     )
 
@@ -157,4 +175,5 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
+    args = parse_args()
+    train(args)
