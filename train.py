@@ -3,31 +3,29 @@ import os
 from pprint import pprint
 from typing import Any, Dict
 
-import numpy as np
-import pandas as pd
 import pytorch_lightning as pl
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from pytorch_lightning.callbacks import ModelCheckpoint
-from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
 
 from dataset import GISCUPDataset, Tokenizer, collate_fn
 from plmodel import GISCUPModel
 
-data_dir = "/data3/ganyunchong/giscup_2021"
-train_dir = os.path.join(data_dir, "train")
-test_file = os.path.join(data_dir, "20200901_test.txt")
-
-
-tokenizer_dir = "/nvme/ganyunchong/didi/10fold"
-kfold_data_dir = "/nvme/ganyunchong/didi/10fold"
-
 
 def parse_args():
     parser = argparse.ArgumentParser("Train")
+
+    parser.add_argument(
+        "--data_dir", type=str, default="/data3/ganyunchong/giscup_2021"
+    )
+    parser.add_argument(
+        "--tokenizer_dir",
+        type=str,
+        # default="/nvme/ganyunchong/didi/10fold",
+        default=".",
+    )
+    parser.add_argument(
+        "--kfold_data_dir", type=str, default="/nvme/ganyunchong/didi/10fold"
+    )
 
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--gpus", type=int, default=1)
@@ -38,6 +36,7 @@ def parse_args():
     parser.add_argument("--weight_decay", type=float, default=0.0)
     parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--save_top_k", type=int, default=1)
+    parser.add_argument("--load", action="store_true")
 
     parser.add_argument("--ckpt_path", type=str, default="")
 
@@ -66,23 +65,27 @@ def train(args):
         train_end=args.train_end,
         validation_end=args.val_end,
         fold=args.fold,
-        tokenizer_dir=tokenizer_dir,
-        kfold_data_dir=kfold_data_dir,
+        tokenizer_dir=args.tokenizer_dir,
+        kfold_data_dir=args.kfold_data_dir,
+        load=args.load,
     )
     val_dataset = GISCUPDataset(
         dataset_type="val",
         train_end=args.train_end,
         validation_end=args.val_end,
         fold=args.fold,
-        tokenizer_dir=tokenizer_dir,
-        kfold_data_dir=kfold_data_dir,
+        tokenizer_dir=args.tokenizer_dir,
+        kfold_data_dir=args.kfold_data_dir,
+        load=args.load,
     )
     test_dataset = GISCUPDataset(
         dataset_type="test",
         fold=args.fold,
-        tokenizer_dir=tokenizer_dir,
-        kfold_data_dir=kfold_data_dir,
+        tokenizer_dir=args.tokenizer_dir,
+        kfold_data_dir=args.kfold_data_dir,
+        load=args.load,
     )
+    # train_dataset.generate_tokenizer()
     train_dataset.load_tokenizer()
     val_dataset.load_tokenizer()
     test_dataset.load_tokenizer()

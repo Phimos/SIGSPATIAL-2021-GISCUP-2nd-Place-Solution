@@ -17,15 +17,6 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_se
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-data_dir = "/path/to/your/download/dataset/"
-
-train_dir = os.path.join(data_dir, "train")
-parsed_dir = os.path.join(data_dir, "parsed")
-test_file = os.path.join(data_dir, "20200901_test.txt")
-final_files = [os.path.join(data_dir, "20200901_test.txt")]
-weather_file = os.path.join(data_dir, "weather.csv")
-json_dir = os.path.join(data_dir, "json")
-
 
 def parse_head(head: str):
     order_id, ata, distance, simple_eta, driver_id, slice_id = head.split(" ")
@@ -173,9 +164,17 @@ class GISCUPDataset(Dataset):
         load: bool = False,
         flush: bool = False,
         fold: int = 0,
-        calc_weight=time_weight,
+        calc_weight: Callable = time_weight,
+        data_dir: str = "/data3/ganyunchong/giscup_2021",
     ):
         super().__init__()
+
+        self.train_dir = os.path.join(data_dir, "train")
+        self.parsed_dir = os.path.join(data_dir, "parsed")
+        self.test_file = os.path.join(data_dir, "20200901_test.txt")
+        self.final_files = [os.path.join(data_dir, "20200901_test.txt")]
+        self.weather_file = os.path.join(data_dir, "weather.csv")
+        self.json_dir = os.path.join(data_dir, "json")
 
         self.transform_func = transform_func
 
@@ -204,7 +203,7 @@ class GISCUPDataset(Dataset):
         assert not (self.load and self.fold > 0)
 
         if self.load:
-            self.weather = pd.read_csv(weather_file)
+            self.weather = pd.read_csv(self.weather_file)
             self.weather.date = self.weather.date.astype(str)
             self.weather = self.weather.set_index("date")
 
@@ -212,20 +211,20 @@ class GISCUPDataset(Dataset):
 
             if "train" in dataset_type:
                 self.random_drop = True
-                for filename in os.listdir(train_dir):
+                for filename in os.listdir(self.train_dir):
                     date, _ = os.path.splitext(filename)
                     if date <= train_end:
-                        filenames.append(os.path.join(train_dir, filename))
+                        filenames.append(os.path.join(self.train_dir, filename))
             if "val" in dataset_type:
-                for filename in os.listdir(train_dir):
+                for filename in os.listdir(self.train_dir):
                     date, _ = os.path.splitext(filename)
                     if train_end < date <= validation_end:
-                        filenames.append(os.path.join(train_dir, filename))
+                        filenames.append(os.path.join(self.train_dir, filename))
             if "test" in dataset_type:
-                filenames += [test_file]
+                filenames += [self.test_file]
 
             if "final" in dataset_type:
-                filenames += final_files
+                filenames += self.final_files
 
             filenames.sort()
 
@@ -249,52 +248,52 @@ class GISCUPDataset(Dataset):
                     )
                 if "test" in dataset_type:
                     self.train_files += load_pickle(
-                        os.path.join(json_dir, "20200901.pickle")
+                        os.path.join(self.json_dir, "20200901.pickle")
                     )
                 if "finetune" in dataset_type:
                     self.train_files += load_pickle(
-                        os.path.join(json_dir, "20200804.pickle")
+                        os.path.join(self.json_dir, "20200804.pickle")
                     )
                     self.train_files += load_pickle(
-                        os.path.join(json_dir, "20200811.pickle")
+                        os.path.join(self.json_dir, "20200811.pickle")
                     )
                     self.train_files += load_pickle(
-                        os.path.join(json_dir, "20200818.pickle")
+                        os.path.join(self.json_dir, "20200818.pickle")
                     )
                     self.train_files += load_pickle(
-                        os.path.join(json_dir, "20200825.pickle")
+                        os.path.join(self.json_dir, "20200825.pickle")
                     )
             else:
                 if "train" in dataset_type:
                     self.random_drop = True
-                    for filename in os.listdir(json_dir):
+                    for filename in os.listdir(self.json_dir):
                         date, _ = os.path.splitext(filename)
                         if (
-                            os.path.isfile(os.path.join(json_dir, filename))
+                            os.path.isfile(os.path.join(self.json_dir, filename))
                             and date <= train_end
                         ):
                             self.train_files += load_pickle(
-                                os.path.join(json_dir, filename)
+                                os.path.join(self.json_dir, filename)
                             )
                 if "val" in dataset_type:
-                    for filename in os.listdir(json_dir):
+                    for filename in os.listdir(self.json_dir):
                         date, _ = os.path.splitext(filename)
                         if (
-                            os.path.isfile(os.path.join(json_dir, filename))
+                            os.path.isfile(os.path.join(self.json_dir, filename))
                             and train_end < date <= validation_end
                         ):
                             self.train_files += load_pickle(
-                                os.path.join(json_dir, filename)
+                                os.path.join(self.json_dir, filename)
                             )
                 if "test" in dataset_type:
                     self.train_files += load_pickle(
-                        os.path.join(json_dir, "20200901.pickle")
+                        os.path.join(self.json_dir, "20200901.pickle")
                     )
 
     def load_single_file(self, filepath: str):
         date, _ = os.path.splitext(os.path.basename(filepath))
         date = date[:8]
-        pickle_path = os.path.join(parsed_dir, date + ".pickle")
+        pickle_path = os.path.join(self.parsed_dir, date + ".pickle")
 
         if os.path.exists(pickle_path) and not self.flush:
             result = load_pickle(pickle_path)
@@ -370,7 +369,12 @@ class GISCUPDataset(Dataset):
     def get_json_path(date, order_id: str):
         order_id = order_id.rjust(7, "0")
         return os.path.join(
-            json_dir, date, order_id[0], order_id[1], order_id[2], order_id + ".json"
+            self.json_dir,
+            date,
+            order_id[0],
+            order_id[1],
+            order_id[2],
+            order_id + ".json",
         )
 
     def preprocess_to_json(self) -> None:
@@ -382,7 +386,7 @@ class GISCUPDataset(Dataset):
                 file_path = self.get_json_path(date, order_id)
                 file_paths.append(file_path)
                 dump_json(order, file_path)
-            dump_pickle(file_paths, os.path.join(json_dir, date + ".pickle"))
+            dump_pickle(file_paths, os.path.join(self.json_dir, date + ".pickle"))
 
     def generate_tokenizer(self, tokenizer_dir="."):
         assert self.load

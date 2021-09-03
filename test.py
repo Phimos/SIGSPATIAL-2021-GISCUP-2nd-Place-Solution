@@ -1,68 +1,81 @@
+import argparse
 import os
-import random
-import time
 from pprint import pprint
 from typing import Any, Dict
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import pytorch_lightning as pl
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
 
 from dataset import GISCUPDataset, Tokenizer, collate_fn
 from plmodel import GISCUPModel
 
-data_dir = "/data3/ganyunchong/giscup_2021"
-train_dir = os.path.join(data_dir, "train")
-test_file = os.path.join(data_dir, "20200901_test.txt")
 
-GPUS = 1
-EPOCHS = 30
-WORKERS = 32
-BATCH_SIZE = 1024
-FOLD = 1
+def parse_args():
+    parser = argparse.ArgumentParser("Test")
 
-train_end: str = "20200824"
-validation_end: str = "20200831"
+    parser.add_argument(
+        "--data_dir", type=str, default="/data3/ganyunchong/giscup_2021"
+    )
+    parser.add_argument(
+        "--tokenizer_dir", type=str, default="/nvme/ganyunchong/didi/10fold"
+    )
+    parser.add_argument(
+        "--kfold_data_dir", type=str, default="/nvme/ganyunchong/didi/10fold"
+    )
 
-ckpt_path = "/nvme/ganyunchong/didi/lightning_logs/version_194/checkpoints/epoch=19-val_mape=0.11666.ckpt"
-tokenizer_dir = "/nvme/ganyunchong/didi/10fold"
-kfold_data_dir = "/nvme/ganyunchong/didi/10fold"
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--gpus", type=int, default=1)
+    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--epochs", type=int, default=25)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--num_workers", type=int, default=32)
+    parser.add_argument("--weight_decay", type=float, default=0.0)
+    parser.add_argument("--fold", type=int, default=0)
+    parser.add_argument("--load", action="store_true")
+
+    parser.add_argument("--ckpt_path", type=str, required=True)
+
+    parser.add_argument("--train_end", type=str, default="20200824")
+    parser.add_argument("--val_end", type=str, default="20200831")
+
+    parser.add_argument("--cross", dest="cross", action="store_true")
+    parser.add_argument("--no-cross", dest="cross", action="store_false")
+    parser.set_defaults(cross=True)
+
+    parser.add_argument("--aux-loss", dest="aux_loss", action="store_true")
+    parser.add_argument("--no-aux-loss", dest="aux_loss", action="store_false")
+    parser.set_defaults(aux_loss=True)
+
+    return parser.parse_args()
 
 
-def test():
-    pl.seed_everything(42)
+def test(args):
+    pl.seed_everything(args.seed)
 
     cpu_num = os.cpu_count()
     assert isinstance(cpu_num, int)
 
     train_dataset = GISCUPDataset(
         dataset_type="train",
-        train_end=train_end,
-        validation_end=validation_end,
-        fold=FOLD,
-        tokenizer_dir=tokenizer_dir,
-        kfold_data_dir=kfold_data_dir,
+        train_end=args.train_end,
+        validation_end=args.val_end,
+        fold=args.fold,
+        tokenizer_dir=args.tokenizer_dir,
+        kfold_data_dir=args.kfold_data_dir,
     )
     val_dataset = GISCUPDataset(
         dataset_type="val",
-        train_end=train_end,
-        validation_end=validation_end,
-        fold=FOLD,
-        tokenizer_dir=tokenizer_dir,
-        kfold_data_dir=kfold_data_dir,
+        train_end=args.train_end,
+        validation_end=args.val_end,
+        fold=args.fold,
+        tokenizer_dir=args.tokenizer_dir,
+        kfold_data_dir=args.kfold_data_dir,
     )
     test_dataset = GISCUPDataset(
         dataset_type="test",
-        fold=FOLD,
-        tokenizer_dir=tokenizer_dir,
-        kfold_data_dir=kfold_data_dir,
+        fold=args.fold,
+        tokenizer_dir=args.tokenizer_dir,
+        kfold_data_dir=args.kfold_data_dir,
     )
 
     train_dataset.load_tokenizer()
@@ -71,23 +84,23 @@ def test():
 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=True,
-        num_workers=WORKERS,
+        num_workers=args.num_workers,
         collate_fn=collate_fn,
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=False,
-        num_workers=WORKERS,
+        num_workers=args.num_workers,
         collate_fn=collate_fn,
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=args.batch_size,
         shuffle=False,
-        num_workers=WORKERS,
+        num_workers=args.num_workers,
         collate_fn=collate_fn,
     )
 
@@ -101,13 +114,13 @@ def test():
     print("validation step:", len(val_loader))
     print("test step:", len(test_loader))
 
-    if FOLD != 0:
-        submission_file = "submission_fold%d.csv" % FOLD
+    if args.fold != 0:
+        submission_file = "submission_fold%d.csv" % args.fold
     else:
         submission_file = "submission.csv"
 
     model = GISCUPModel.load_from_checkpoint(
-        checkpoint_path=ckpt_path,
+        checkpoint_path=args.ckpt_path,
         driver_num=basic_info["driver_num"],
         link_num=basic_info["link_num"],
         wide_config=wide_config,
@@ -122,4 +135,5 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    args = parse_args()
+    test(args)
