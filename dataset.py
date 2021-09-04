@@ -365,8 +365,7 @@ class GISCUPDataset(Dataset):
         else:
             return self.extract_feature(data)
 
-    @staticmethod
-    def get_json_path(date, order_id: str):
+    def get_json_path(self, date, order_id: str):
         order_id = order_id.rjust(7, "0")
         return os.path.join(
             self.json_dir,
@@ -379,13 +378,31 @@ class GISCUPDataset(Dataset):
 
     def preprocess_to_json(self) -> None:
         assert self.load
+
+        def build_arrival_slice_id(order):
+            slice_id = order["head"]["slice_id"]
+            sum_time = 0
+            crosses = order["cross"]
+            cross_idx = 0
+            for link in order["link"]:
+                if (
+                    cross_idx != len(crosses)
+                    and str(link["link_id"]) in crosses[cross_idx]["cross_id"]
+                ):
+                    sum_time += crosses[cross_idx]["cross_time"]
+                    cross_idx += 1
+                sum_time += link["link_time"]
+                arrival_slice_id = (slice_id + round(sum_time / 300)) % 288
+                link["link_arrival_slice_id"] = arrival_slice_id
+            return order
+
         for date, orders in self.loaded_data.items():
             file_paths = []
             for order in tqdm(orders):
                 order_id = order["head"]["order_id"]
                 file_path = self.get_json_path(date, order_id)
                 file_paths.append(file_path)
-                dump_json(order, file_path)
+                dump_json(build_arrival_slice_id(order), file_path)
             dump_pickle(file_paths, os.path.join(self.json_dir, date + ".pickle"))
 
     def generate_tokenizer(self, tokenizer_dir="."):
