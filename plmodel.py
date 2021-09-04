@@ -19,32 +19,25 @@ from model import MAPE, RMSPE, WDRR
 
 
 class GISCUPModel(pl.LightningModule):
-    def __init__(
-        self,
-        driver_num,
-        link_num,
-        wide_config,
-        deep_config,
-        rnn_config,
-        lr: float = 0.0001,
-        weight_decay=0.0,
-        submission_file: str = "submission.csv",
-    ):
+    def __init__(self, config):
         super(GISCUPModel, self).__init__()
-        self.lr = lr
-        self.weight_decay = weight_decay
-        self.aux_loss = True
+        self.save_hyperparameters(config)
+
+        self.lr = self.hparams.lr
+        self.weight_decay = self.hparams.weight_decay
+        self.aux_loss = self.hparams.aux_loss
         self.model = WDRR(
-            driver_num=driver_num,
-            link_num=link_num,
-            wide_config=wide_config,
-            deep_config=deep_config,
-            rnn_config=rnn_config,
+            driver_num=self.hparams.driver_num,
+            link_num=self.hparams.link_num,
+            wide_config=self.hparams.wide,
+            deep_config=self.hparams.deep,
+            rnn_config=self.hparams.rnn,
+            use_cross=self.hparams.cross,
         )
         self.loss = MAPE()
         self.metric = MAPE()
 
-        self.submission_file = submission_file
+        self.submission_file = self.hparams.submission_file
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)

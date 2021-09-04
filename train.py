@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader, Dataset
 
-from dataset import GISCUPDataset, Tokenizer, collate_fn
+from dataset import GISCUPDataset, Tokenizer, collate_fn, time_weight
 from plmodel import GISCUPModel
 
 
@@ -51,6 +51,10 @@ def parse_args():
     parser.add_argument("--no-aux-loss", dest="aux_loss", action="store_false")
     parser.set_defaults(aux_loss=True)
 
+    parser.add_argument("--time-weight", dest="time_weight", action="store_true")
+    parser.add_argument("--no-time-weight", dest="time_weight", action="store_false")
+    parser.set_defaults(time_weight=True)
+
     return parser.parse_args()
 
 
@@ -67,6 +71,7 @@ def train(args):
         fold=args.fold,
         tokenizer_dir=args.tokenizer_dir,
         kfold_data_dir=args.kfold_data_dir,
+        calc_weight=time_weight if args.time_weight else None,
         load=args.load,
     )
     val_dataset = GISCUPDataset(
@@ -76,6 +81,7 @@ def train(args):
         fold=args.fold,
         tokenizer_dir=args.tokenizer_dir,
         kfold_data_dir=args.kfold_data_dir,
+        calc_weight=time_weight if args.time_weight else None,
         load=args.load,
     )
     test_dataset = GISCUPDataset(
@@ -83,6 +89,7 @@ def train(args):
         fold=args.fold,
         tokenizer_dir=args.tokenizer_dir,
         kfold_data_dir=args.kfold_data_dir,
+        calc_weight=time_weight if args.time_weight else None,
         load=args.load,
     )
     # train_dataset.generate_tokenizer()
@@ -120,26 +127,23 @@ def train(args):
         val_loader = None
 
     basic_info, wide_config, deep_config, rnn_config = train_dataset.generate_config()
-    pprint(basic_info)
-    pprint(wide_config)
-    pprint(deep_config)
-    pprint(rnn_config)
 
     if args.fold != 0:
         submission_file = "submission_fold%d.csv" % args.fold
     else:
         submission_file = "submission.csv"
 
-    model = GISCUPModel(
-        driver_num=basic_info["driver_num"],
-        link_num=basic_info["link_num"],
-        wide_config=wide_config,
-        deep_config=deep_config,
-        rnn_config=rnn_config,
-        lr=args.lr,
-        weight_decay=args.weight_decay,
-        submission_file=submission_file,
-    )
+    model_config = args.__dict__.copy()
+    model_config["wide"] = wide_config
+    model_config["deep"] = deep_config
+    model_config["rnn"] = rnn_config
+    model_config["driver_num"] = basic_info["driver_num"]
+    model_config["link_num"] = basic_info["link_num"]
+    model_config["submission_file"] = submission_file
+
+    pprint(model_config)
+
+    model = GISCUPModel(model_config)
 
     checkpoint_callback = ModelCheckpoint(
         monitor="val_mape",
@@ -162,17 +166,7 @@ def train(args):
 
     trainer.fit(model, train_loader, val_loader)
 
-    model = GISCUPModel.load_from_checkpoint(
-        checkpoint_path=checkpoint_callback.best_model_path,
-        driver_num=basic_info["driver_num"],
-        link_num=basic_info["link_num"],
-        wide_config=wide_config,
-        deep_config=deep_config,
-        rnn_config=rnn_config,
-        lr=args.lr,
-        weight_decay=args.weight_decay,
-        submission_file=submission_file,
-    )
+    model = GISCUPModel.load_from_checkpoint(checkpoint_callback.best_model_path)
 
     trainer.test(model, test_loader)
 
