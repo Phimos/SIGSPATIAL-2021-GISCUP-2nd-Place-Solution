@@ -51,8 +51,10 @@ def parse_args():
     parser.add_argument("--no-aux-loss", dest="aux_loss", action="store_false")
     parser.set_defaults(aux_loss=True)
 
-    parser.add_argument("--time-weight", dest="time_weight", action="store_true")
-    parser.add_argument("--no-time-weight", dest="time_weight", action="store_false")
+    parser.add_argument("--time-weight", dest="time_weight",
+                        action="store_true")
+    parser.add_argument("--no-time-weight",
+                        dest="time_weight", action="store_false")
     parser.set_defaults(time_weight=True)
 
     return parser.parse_args()
@@ -166,7 +168,8 @@ def train(args):
 
     trainer.fit(model, train_loader, val_loader)
 
-    model = GISCUPModel.load_from_checkpoint(checkpoint_callback.best_model_path)
+    model = GISCUPModel.load_from_checkpoint(
+        checkpoint_callback.best_model_path)
 
     trainer.test(model, test_loader)
 

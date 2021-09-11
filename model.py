@@ -5,7 +5,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_sequence
+from torch.nn.utils.rnn import (pack_padded_sequence, pad_packed_sequence,
+                                pad_sequence)
 
 
 class MAPE(nn.Module):
@@ -28,7 +29,8 @@ class RMSPE(nn.Module):
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor):
         return torch.sqrt(
-            torch.mean(torch.square((pred - target).abs() / (target.abs() + self.eps)))
+            torch.mean(torch.square(
+                (pred - target).abs() / (target.abs() + self.eps)))
         )
 
 
@@ -41,7 +43,8 @@ class Wide(nn.Module):
     @property
     def feature_dim(self) -> int:
         dense_dim = self.config["dense"]["size"]
-        sparse_dim = sum([feature["size"] for feature in self.config["sparse"]])
+        sparse_dim = sum([feature["size"]
+                          for feature in self.config["sparse"]])
         cross_dim = sum(
             [
                 feature1["size"] * feature2["size"]
@@ -152,7 +155,8 @@ class Recurrent(nn.Module):
         self.use_cross = use_cross
 
         self.link_embedding = nn.Embedding(link_num, embedding_dim)
-        self.linear_link = nn.Linear(embedding_dim + self.feature_dim, hidden_dim)
+        self.linear_link = nn.Linear(
+            embedding_dim + self.feature_dim, hidden_dim)
         self.lstm_link = nn.LSTM(
             input_size=hidden_dim,
             hidden_size=hidden_dim,
@@ -223,7 +227,8 @@ class Recurrent(nn.Module):
             embed_cross_start = self.link_embedding(cross_id_start)
             embed_cross_end = self.link_embedding(cross_id_end)
 
-            cross = torch.cat([cross_dense, embed_cross_start, embed_cross_end], dim=-1)
+            cross = torch.cat(
+                [cross_dense, embed_cross_start, embed_cross_end], dim=-1)
             cross = self.linear_cross(cross)
             cross = F.relu(cross)
 
@@ -238,7 +243,7 @@ class Recurrent(nn.Module):
             return ht_link[-1], arrival_pred
 
 
-class WDRR(nn.Module):
+class WDDR(nn.Module):
     def __init__(
         self,
         driver_num,
@@ -250,7 +255,7 @@ class WDRR(nn.Module):
         dropout=0.1,
         use_cross=True,
     ):
-        super(WDRR, self).__init__()
+        super(WDDR, self).__init__()
         self.wide = Wide(wide_config)
         self.deep = Deep(deep_config, dropout=dropout)
         self.recurrent = Recurrent(

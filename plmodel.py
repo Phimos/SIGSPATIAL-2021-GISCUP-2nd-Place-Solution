@@ -11,11 +11,12 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pad_sequence
+from torch.nn.utils.rnn import (pack_padded_sequence, pad_packed_sequence,
+                                pad_sequence)
 from torch.optim import Adam
 
 from dataset import GISCUPDataset, collate_fn
-from model import MAPE, RMSPE, WDRR
+from model import MAPE, RMSPE, WDDR
 
 
 class GISCUPModel(pl.LightningModule):
@@ -26,7 +27,7 @@ class GISCUPModel(pl.LightningModule):
         self.lr = self.hparams.lr
         self.weight_decay = self.hparams.weight_decay
         self.aux_loss = self.hparams.aux_loss
-        self.model = WDRR(
+        self.model = WDDR(
             driver_num=self.hparams.driver_num,
             link_num=self.hparams.link_num,
             wide_config=self.hparams.wide,
@@ -169,5 +170,6 @@ class GISCUPModel(pl.LightningModule):
         submit.to_csv(self.submission_file, index=False)
 
     def configure_optimizers(self):
-        optimizer = Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = Adam(self.parameters(), lr=self.lr,
+                         weight_decay=self.weight_decay)
         return optimizer
