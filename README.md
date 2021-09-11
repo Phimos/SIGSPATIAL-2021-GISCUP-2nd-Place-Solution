@@ -1,6 +1,59 @@
-# SIGSPATIAL-2021-GISCUP-3rd-Solution
+# SIGSPATIAL-2021-GISCU-2nd-Place-Solution
 
 **Competition Page:** [DiDi-ETA](https://www.biendata.xyz/competition/didi-eta/)
+
+**Final Official Ranking**
+
+<table>
+    <tr>
+        <th>Ranking</th>
+        <th>Award (Cash Prize)</th>
+        <th>Name</th>
+        <th>MAPE</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>Champion ($10,000)</td>
+        <td>单模CBT</td>
+        <td>0.11974</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td rowspan="2">Runner-ups</br>
+($5,000 each team)</td>
+        <td>Pims</td>
+        <td>0.12099</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>华南工农联盟</td>
+        <td>0.12116</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td rowspan="2">Second Runner-ups</br>
+($2,500 each team)</td>
+        <td>机器算命</td>
+        <td>0.12177</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td>pumbaa</td>
+        <td>0.12198</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td rowspan="2">Recognition Award</br>
+($1,000 each team)</td>
+        <td>MobiLab</td>
+        <td>0.12478</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>悦智AI实验室</td>
+        <td>0.12511</td>
+    </tr>
+</table>
 
 **Team Name:** Pims
 
